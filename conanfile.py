@@ -10,8 +10,12 @@ class IconvConan(ConanFile):
     description = 'GNU Library for character set conversions.'
     author = 'Andrew Marshall <planetmarshalluk@gmail.com>'
     settings = 'os', 'compiler', 'build_type', 'arch'
-    options = {'shared': [True, False]}
-    default_options = {'shared': False}
+    options = {'shared': [True, False],
+            'fPIC': [True, False]}
+    default_options = {
+            'shared': False,
+            'fPIC': True
+            }
     generators = 'cmake'
 
     @property
@@ -23,13 +27,15 @@ class IconvConan(ConanFile):
         tools.get(url)
 
     def build(self):
+        def on(arg):
+            return 'yes' if arg else 'no'
         with tools.chdir(os.path.join(self.source_folder,'libiconv-1.16')):
-            autotools = AutoToolsBuildEnvironment(self)
-
             args = [
-                '--enable-shared' if self.options.shared else '--enable-static',
+                '--enable-shared=' + on(self.options.shared),
+                '--enable-static=' + on(not self.options.shared),
                 '--prefix=' + self._staging_folder
             ]
+            autotools = AutoToolsBuildEnvironment(self)
             autotools.configure(args=args)
             autotools.make()
             autotools.install()
